@@ -128,9 +128,9 @@ class ConfigManager:
         self.active_config['topic_watchdog']['amiweather/8/temperature']['max_time_seconds'] = 60
         # Publish Topics
         self.active_config['publish']['base_topic'] = 'sc_mqtt_broker/'
-        self.active_config['publish']['process_status'] = 'process_status'
+        self.active_config['publish']['process_stats'] = 'process_stats'
         self.active_config['publish']['topic_list'] = 'topic_list'
-        self.active_config['publish']['missing_topics'] = 'missing_topics'
+        self.active_config['publish']['watchdog_topics'] = 'watchdog_topics'
 
     '''
     Recursively convert all defaultdicts to dicts; useful for JSON serialization
