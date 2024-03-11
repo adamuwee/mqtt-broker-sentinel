@@ -54,7 +54,12 @@ class MqttSubscriber:
         self._logger.write(self._log_key, "Stopping...", logger.MessageLevel.INFO)
         self._mqtt_stop()
         self._logger.write(self._log_key, "Stopped", logger.MessageLevel.INFO)
-        
+    
+    '''
+    Return true/false if the MQTT client is connected
+    '''
+    def is_connected(self) -> bool:
+        return self._mqtt_client.is_connected()
         
     '''
     Initialize the connection to the MQTT broker

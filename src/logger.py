@@ -39,4 +39,10 @@ class Logger:
                                             key,
                                             level_str).ljust(60)
         #print(header + msg)
-        os.write(sys.stdout.fileno(), (header + msg + "\n").encode('utf8'))
+        os.write(sys.stdout.fileno(), ("\n" + header + msg).encode('utf8'))
+    
+    '''
+    Write a string to the console without a header or new line
+    '''
+    def write_single_line_no_header(self, msg) -> None:
+        os.write(sys.stdout.fileno(), (msg).encode('utf8'))

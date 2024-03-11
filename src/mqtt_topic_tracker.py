@@ -45,7 +45,7 @@ class MqttTopicTracker:
     def get_copy_topic_list_with_deltas(self):
         now = datetime.datetime.now()
         topic_list_with_deltas = dict()
-        for (topic, last_time) in self._topics.items():
+        for (topic, last_time) in self.get_copy_topic_list().items():
             delta = now - last_time
             topic_list_with_deltas[topic] = (last_time, delta)
         return topic_list_with_deltas
@@ -61,8 +61,8 @@ class MqttTopicTracker:
             if (delta.total_seconds() > all_topics_max_time_seconds):
                 topic_list[topic] = (last_time, delta)
             else:
-                for (topic, watchdog_time_seconds) in watchdog_list.items():
-                    if (delta.total_seconds() > watchdog_time_seconds):
+                for (wdt_topic, watchdog_time_seconds) in watchdog_list.items():
+                    if (topic == wdt_topic and delta.total_seconds() > watchdog_time_seconds):
                         topic_list[topic] = (last_time, delta)
         return topic_list
     

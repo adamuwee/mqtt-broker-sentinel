@@ -122,10 +122,10 @@ class ConfigManager:
         self.active_config['mqtt_broker']['connection']['host_port'] = 1883
         # MQTT Broker Process
         self.active_config['mqtt_broker']['process']['name'] = 'Notepad.exe'
-        self.active_config['mqtt_broker']['process']['service_wd_period_seconds'] = 60
+        self.active_config['mqtt_broker']['process']['service_wd_period_seconds'] = 10
         # MQTT Topic Watchdog Values
         self.active_config['topic_watchdog']['all']['max_time_seconds'] = 3600
-        self.active_config['topic_watchdog']['amiweather/8/temperature']['max_time_seconds'] = 120
+        self.active_config['topic_watchdog']['amiweather/8/temperature']['max_time_seconds'] = 60
         # Publish Topics
         self.active_config['publish']['base_topic'] = 'sc_mqtt_broker/'
         self.active_config['publish']['process_status'] = 'process_status'

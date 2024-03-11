@@ -9,6 +9,9 @@ import mqtt_topic_tracker
 '''
 class MqttBrokerSentinel:
 
+    # Private Members
+    _message_counter = 0
+
     '''
     Class Initialization - locals and setup; fast and no fail.
     '''
@@ -17,6 +20,7 @@ class MqttBrokerSentinel:
                  app_config : config.ConfigManager) -> None:
         self._app_logger = app_logger
         self._app_config = app_config
+        self._message_counter = 0
 
     '''
     Start the Sentinel thread. Non-blocking.
@@ -37,18 +41,13 @@ class MqttBrokerSentinel:
                                                                   self._app_logger)
 
         # Mqtt Client
-        topic_base = "#"
-        self._mqtt_client = mqtt_subscriber.MqttSubscriber(self._app_config, 
-                                                     self._app_logger, 
-                                                     self._new_mqtt_message_callback, 
-                                                     topic_base)
-        self._mqtt_client.start()
-
+        self._start_mqtt_client()
 
         self._app_logger.write("sentinel", "Started.", logger.MessageLevel.INFO)
         return start_ok
                                
     
+
     '''
     Stop the Sentinel thread. Blocking.
     '''
@@ -64,6 +63,9 @@ class MqttBrokerSentinel:
     '''
     def _new_mqtt_message_callback(self, topic, message):
         is_new_topic = self._topic_tracker.new_topic_data_received(topic)
+        #self._app_logger.write("sentinel", f'{topic:<70} {str(message):<30}', logger.MessageLevel.INFO) 
+        self._app_logger.write_single_line_no_header('.')
+        self._message_counter += 1
 
     '''
     Callback from process monitor that checks every minute (default)
@@ -78,9 +80,38 @@ class MqttBrokerSentinel:
             self._app_logger.write("sentinel", f'{topic:<70} {str(last_time):<30} {delta}', logger.MessageLevel.INFO) 
 
         # Print the topics in violation of the watchdog
-        self._app_logger.write("sentinel", "<------------ Watchdog Violations ------------>", logger.MessageLevel.INFO)    
+        self._app_logger.write("sentinel", "<------------ Watchdog Violations ------------>", logger.MessageLevel.INFO)  
+        violation_count = len(self._topic_tracker.get_topics_in_time_violation().items()) 
+        self._app_logger.write("sentinel", f"Violations: {violation_count} of {topic_count}", logger.MessageLevel.INFO)
         for (topic, delta) in self._topic_tracker.get_topics_in_time_violation().items():
             self._app_logger.write("sentinel", f"Topic in violation: {topic} - {delta}", logger.MessageLevel.WARN) 
+
+        # Check on the mqtt client connection - the client connection is shakey and needs to be kicked every so often
+        self._validate_mqtt_broker_connection()
+
+    '''
+    Start the mqtt client
+    '''
+    def _start_mqtt_client(self):
+        topic_base = "#"
+        self._mqtt_client = mqtt_subscriber.MqttSubscriber(self._app_config, 
+                                                     self._app_logger, 
+                                                     self._new_mqtt_message_callback, 
+                                                     topic_base)
+        self._mqtt_client.start()
+    
+    def _validate_mqtt_broker_connection(self):
+        if self._mqtt_client is None or not self._mqtt_client.is_connected():
+            self._app_logger.write("sentinel", "Restarting MQTT Client...", logger.MessageLevel.WARN)
+            self._start_mqtt_client()
+            if self._mqtt_client.is_connected():
+                self._app_logger.write("sentinel", "MQTT Client restarted.", logger.MessageLevel.WARN)
+            else:
+                process_check_seconds = self._app_config.active_config['mqtt_broker']['process']["service_wd_period_seconds"]
+                self._app_logger.write("sentinel", 
+                                       f"Unable to restart MQTT client. Will attempt again in {process_check_seconds} seconds.", 
+                                       logger.MessageLevel.WARN)
+
           
 '''
 Service Entry Point
