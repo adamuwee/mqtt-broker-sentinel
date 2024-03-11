@@ -6,13 +6,16 @@ import random
 class MqttSubscriber:
 
     # Private Class Constants
-    _log_key = "mqtt_sub"
+    _log_key = "mqtt_pubsub"
     
     # Private Class Members
     _logger = None
     _app_config = None
     _mqtt_client = None
     _mqtt_topic = None
+
+    # TODO: add publish functionalit
+    
 
     '''
     MQTT Subscriber with callback support.
@@ -22,6 +25,7 @@ class MqttSubscriber:
                  app_config : config.ConfigManager, 
                  app_logger : logger.Logger, 
                  new_message_callback, 
+                 publish_message_callback,
                  mqtt_topic : str) -> None:
         
         # Locals
@@ -31,6 +35,7 @@ class MqttSubscriber:
         self._app_config = app_config
         self._new_message_callback = new_message_callback
         self._mqtt_topic = mqtt_topic
+        self._publish_message_callback = publish_message_callback
 
         # Init Done
         self._logger.write(self._log_key, "Init complete.", logger.MessageLevel.INFO)
@@ -81,6 +86,26 @@ class MqttSubscriber:
             self._mqtt_client.loop_stop()
             return self._mqtt_client.disconnect()
         return 0
+    
+    '''
+    Publish a payload to a given topic
+    '''
+    def mqtt_publish(self, topic, payload) -> mqtt.MQTTMessageInfo:
+        return self._mqtt_client.publish(topic, payload)
+    
+    '''
+    Internal callback for a new connection to the MQTT broker
+    '''
+    def _on_connect_callback(self, client, userdata, flags, rc) -> None:
+        self._logger.write(self._log_key, f"Connected with result code {rc}", logger.MessageLevel.INFO)
+
+    '''
+    Internal callback for a new message published to the MQTT broker
+    '''
+    def _on_publish_callback(self, client, userdata, mid) -> None:  
+        self._logger.write(self._log_key, f"Published message ID: {mid}", logger.MessageLevel.INFO)
+        if self._publish_message_callback is not None:
+            self._publish_message_callback(mid)
 
     '''
     Internal callback for new messages received on the subscribed topic

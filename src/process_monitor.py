@@ -32,8 +32,6 @@ class ProcessMonitor(threading.Thread):
             proc_name = self._app_config.active_config['mqtt_broker']['process']["name"]
             sleep_time_secs = self._app_config.active_config['mqtt_broker']['process']["service_wd_period_seconds"]
             process_exists = False
-
-
             if platform.system() == 'Windows':
                 process_exists = self._windows_process_exists(proc_name)
                 self._logger.write("proc_mon", f'Service {proc_name} running = {process_exists}. Sleeping for {sleep_time_secs} seconds.')

@@ -2,6 +2,7 @@ import datetime
 import copy
 import config
 import logger
+import json
 
 '''
 Keeps a list of topics and notifies when a new topic is received. It also monitors the last time a topic was received.
@@ -56,6 +57,17 @@ class MqttTopicTracker:
             topic_list_with_deltas[topic] = (last_time, delta)
         return topic_list_with_deltas
     
+    '''
+    Get a JSON string representation of the topic list with deltas
+    '''
+    def get_json_topic_list(self):
+        json_topic_list = list()
+        for (topic, (last_report_datetime, last_report_delta)) in self.get_copy_topic_list_with_deltas().items():
+            iso_timestamp = last_report_datetime.isoformat()
+            total_seconds = last_report_delta.total_seconds()
+            json_topic_list.append((topic, iso_timestamp, total_seconds))
+        return json.dumps(json_topic_list)
+
     '''
     Returns a list of topics that have not been received in the specified time (config)
     '''

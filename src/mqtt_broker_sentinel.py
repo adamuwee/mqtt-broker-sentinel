@@ -1,7 +1,7 @@
 import logger
 import argparse
 import config
-import mqtt_subscriber
+import mqtt_pubsub_client
 import process_monitor
 import mqtt_topic_tracker
 '''
@@ -61,10 +61,19 @@ class MqttBrokerSentinel:
     '''
     def _new_mqtt_message_callback(self, topic, message):
         is_new_topic = self._topic_tracker.new_topic_data_received(topic)
-        #self._app_logger.write("sentinel", f'{topic:<70} {str(message):<30}', logger.MessageLevel.INFO) 
         self._app_logger.write_single_line_no_header('.')
         self._message_counter += 1
-
+        
+        # Update the topic list topic
+        if is_new_topic:
+            self._publish_topic_list()
+    '''
+    Publish the topic list to the mqtt broker
+    '''
+    def _publish_topic_list(self):
+        publish_topic = self._app_config.active_config['publish']['base_topic'] + self._app_config.active_config['publish']['topic_list']
+        topics_list = self._topic_tracker.get_json_topic_list()
+        self._mqtt_client.mqtt_publish(publish_topic, topics_list)
     '''
     Callback from process monitor that checks every minute (default)
     '''
@@ -84,6 +93,11 @@ class MqttBrokerSentinel:
         for (topic, delta) in self._topic_tracker.get_topics_in_time_violation().items():
             self._app_logger.write("sentinel", f"Topic in violation: {topic} - {delta}", logger.MessageLevel.WARN) 
 
+        # Publish mqtt broker stats
+
+        # Publish the list - refresh on a regular basis
+        self._publish_topic_list()
+
         # Check on the mqtt client connection - the client connection is shakey and needs to be kicked every so often
         self._validate_mqtt_broker_connection()
 
@@ -91,12 +105,16 @@ class MqttBrokerSentinel:
     Start the mqtt client
     '''
     def _start_mqtt_client(self):
+        # Subscription Client
         topic_base = "#"
-        self._mqtt_client = mqtt_subscriber.MqttSubscriber(self._app_config, 
+        self._mqtt_client = mqtt_pubsub_client.MqttSubscriber(self._app_config, 
                                                      self._app_logger, 
                                                      self._new_mqtt_message_callback, 
+                                                     None,
                                                      topic_base)
         self._mqtt_client.start()
+
+
     
     def _validate_mqtt_broker_connection(self):
         if self._mqtt_client is None or not self._mqtt_client.is_connected():
