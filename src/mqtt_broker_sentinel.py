@@ -46,8 +46,6 @@ class MqttBrokerSentinel:
         self._app_logger.write("sentinel", "Started.", logger.MessageLevel.INFO)
         return start_ok
                                
-    
-
     '''
     Stop the Sentinel thread. Blocking.
     '''

@@ -11,6 +11,10 @@ class MqttTopicTracker:
     # Private Members
     _log_key = 'topic_tracker'
 
+    # Topic Stats
+    _message_counter = 0
+    _last_counter_reset = None
+
     '''
     Initialize the tracker. Fast, no fail.
     '''
@@ -22,6 +26,8 @@ class MqttTopicTracker:
         self._logger = app_logger
         self._app_config = app_config
         self._topics = dict()
+
+        self._last_counter_reset = datetime.datetime.now()
 
     '''
     Called when a new topic is received by the MQTT Client
@@ -76,3 +82,17 @@ class MqttTopicTracker:
             if topic != 'all':
                 watchdog_list[topic] = watchdog_time_seconds['max_time_seconds']
         return watchdog_list
+    
+    '''
+    Return topic stats
+    '''
+    def get_topic_stats(self) -> dict:
+        stats = dict()
+        now = datetime.datetime.now()
+        delta = now - self._last_counter_reset
+        count = self._message_counter
+        self._message_counter = 0
+        self._last_counter_reset = now
+        stats['msgs_per_sec'] = count / delta.total_seconds()
+        stats['topic_count'] = len(self._topics)
+        return stats

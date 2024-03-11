@@ -26,15 +26,11 @@ class MqttSubscriber:
         
         # Locals
         self._logger = app_logger
+
+        self._logger.write(self._log_key, "Initializing...", logger.MessageLevel.INFO)
         self._app_config = app_config
         self._new_message_callback = new_message_callback
         self._mqtt_topic = mqtt_topic
-
-        self._logger.write(self._log_key, "Initializing...", logger.MessageLevel.INFO)
-
-        # MQTT Connection
-        client_id = f'python-mqtt-{random.randint(0, 1000)}'
-        self._mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id)
 
         # Init Done
         self._logger.write(self._log_key, "Init complete.", logger.MessageLevel.INFO)
@@ -44,6 +40,8 @@ class MqttSubscriber:
     '''
     def start(self) -> None:
         self._logger.write(self._log_key, "Starting...", logger.MessageLevel.INFO)
+        client_id = f'python-mqtt-{random.randint(0, 1000)}'
+        self._mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1, client_id)
         (connect_value, loop_start_value) = self._mqtt_start()
         self._logger.write(self._log_key, f"Connected = {connect_value}.\tLoop Started = {loop_start_value}.")
         self._logger.write(self._log_key, "Started.")
@@ -71,6 +69,7 @@ class MqttSubscriber:
         loop_start_value = self._mqtt_client.loop_start()
         self._mqtt_client.subscribe(self._mqtt_topic)
         self._mqtt_client.on_message = self._on_message_callback
+        self._mqtt_client.on_connect = self._on_connect_callback
         self._logger.write(self._log_key, f"ADDR={broker_addr}, PORT={broker_port}, CONNECTED={connect_value}", logger.MessageLevel.INFO)
         return (connect_value, loop_start_value)
 
@@ -89,3 +88,8 @@ class MqttSubscriber:
     def _on_message_callback(self, client, userdata, message) -> None:
         if (self._new_message_callback is not None):
             self._new_message_callback(message.topic, message.payload)
+    
+    def _on_connect_callback(self, client, userdata, flags, rc) -> None:
+        self._logger.write(self._log_key, f"Connected with result code {rc}", logger.MessageLevel.INFO)
+        self._mqtt_client.subscribe(self._mqtt_topic)
+        self._logger.write(self._log_key, f"Subscribed to {self._mqtt_topic}", logger.MessageLevel.INFO)
