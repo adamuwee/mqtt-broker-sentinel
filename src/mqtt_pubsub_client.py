@@ -14,9 +14,6 @@ class MqttSubscriber:
     _mqtt_client = None
     _mqtt_topic = None
 
-    # TODO: add publish functionalit
-    
-
     '''
     MQTT Subscriber with callback support.
     Initialize config, logger, and callback.
@@ -40,9 +37,7 @@ class MqttSubscriber:
         # Init Done
         self._logger.write(self._log_key, "Init complete.", logger.MessageLevel.INFO)
 
-    '''
-    Start mqtt thread
-    '''
+    '''Start mqtt thread'''
     def start(self) -> None:
         self._logger.write(self._log_key, "Starting...", logger.MessageLevel.INFO)
         client_id = f'python-mqtt-{random.randint(0, 1000)}'
@@ -50,9 +45,8 @@ class MqttSubscriber:
         (connect_value, loop_start_value) = self._mqtt_start()
         self._logger.write(self._log_key, f"Connected = {connect_value}.\tLoop Started = {loop_start_value}.")
         self._logger.write(self._log_key, "Started.")
-    '''
-    Safely shutdown all of the model objects i.e. stop pushing data through the translation pipeline.
-    '''
+    
+    '''Safely shutdown all of the model objects i.e. stop pushing data through the translation pipeline.'''
     def stop(self) -> None:
         self._logger.write(self._log_key, "Stopping...", logger.MessageLevel.INFO)
         self._mqtt_stop()
